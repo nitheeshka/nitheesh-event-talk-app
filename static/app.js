@@ -186,14 +186,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="badge ${badgeClass}">${update.type}</span>
                         <span class="card-date"><i class="fa-regular fa-calendar-days"></i> ${update.date}</span>
                     </div>
-                    <span class="card-select-hint">
-                        <i class="fa-brands fa-x-twitter"></i> Select to Tweet
-                    </span>
+                    <div class="card-actions">
+                        <button class="card-action-btn copy-card-btn" title="Copy to Clipboard" data-id="${update.id}">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <span class="card-select-hint">
+                            <i class="fa-brands fa-x-twitter"></i> Select to Tweet
+                        </span>
+                    </div>
                 </div>
                 <div class="card-body">
                     ${update.contentHtml}
                 </div>
             `;
+
+            // Copy click listener
+            const copyBtn = card.querySelector('.copy-card-btn');
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent trigger card selection
+                copyUpdateToClipboard(update, copyBtn);
+            });
 
             // Click listener
             card.addEventListener('click', () => {
@@ -379,6 +391,98 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Open intent
         window.open(twitterIntentUrl, '_blank');
+    });
+
+    // Copy Update Clean Text to Clipboard
+    function copyUpdateToClipboard(update, buttonElement) {
+        const textToCopy = `📢 BigQuery Release Note (${update.date})\n⚡ ${update.type}: ${update.contentText}\n\nRead more: ${update.link}`;
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            // Success visual feedback
+            const icon = buttonElement.querySelector('i');
+            icon.className = 'fa-solid fa-check';
+            buttonElement.classList.add('copied');
+            
+            setTimeout(() => {
+                icon.className = 'fa-regular fa-copy';
+                buttonElement.classList.remove('copied');
+            }, 1500);
+        }).catch(err => {
+            console.error('Failed to copy to clipboard:', err);
+        });
+    }
+
+    // Export Current Filtered Updates to CSV
+    function exportToCsv() {
+        if (filteredUpdates.length === 0) {
+            alert("No updates to export!");
+            return;
+        }
+
+        // CSV Headers
+        const headers = ["Date", "Type", "Description", "Link"];
+        
+        // Map updates to CSV rows
+        const csvRows = [headers.join(",")];
+        
+        filteredUpdates.forEach(update => {
+            // Escape double quotes by doubling them
+            const dateStr = update.date.replace(/"/g, '""');
+            const typeStr = update.type.replace(/"/g, '""');
+            const descStr = update.contentText.replace(/"/g, '""');
+            const linkStr = update.link.replace(/"/g, '""');
+            
+            csvRows.push(`"${dateStr}","${typeStr}","${descStr}","${linkStr}"`);
+        });
+
+        const csvContent = csvRows.join("\r\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        
+        // Format filename based on filter / search parameters
+        let filename = "bigquery_release_notes";
+        if (currentFilter !== 'all') {
+            filename += `_${currentFilter}`;
+        }
+        if (searchQuery) {
+            // Clean filename characters
+            filename += `_search_${searchQuery.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        }
+        filename += ".csv";
+
+        // Download trigger
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    // Export CSV Listener
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    exportCsvBtn.addEventListener('click', exportToCsv);
+
+    // Light/Dark Theme Switch Logic
+    const themeToggle = document.getElementById('theme-toggle');
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        themeToggle.checked = true;
+    }
+
+    themeToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            document.body.classList.add('light-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.body.classList.remove('light-theme');
+            localStorage.setItem('theme', 'dark');
+        }
     });
 
     // Initialize App

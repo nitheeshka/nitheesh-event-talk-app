@@ -30,6 +30,21 @@
             </div>
             
             <div class="action-area">
+                <!-- Theme Toggle Switch -->
+                <div class="theme-switch-container">
+                    <i class="fa-regular fa-moon theme-icon moon-icon"></i>
+                    <label class="theme-switch" for="theme-toggle">
+                        <input type="checkbox" id="theme-toggle" />
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="fa-regular fa-sun theme-icon sun-icon"></i>
+                </div>
+                <!-- Export to CSV Button -->
+                <button id="export-csv-btn" class="btn btn-secondary" title="Export Current List to CSV">
+                    <i class="fa-solid fa-file-csv"></i>
+                    <span>Export CSV</span>
+                </button>
+                <!-- Refresh Button -->
                 <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
                     <i id="refresh-spinner" class="fa-solid fa-arrows-rotate"></i>
                     <span>Refresh Feed</span>
